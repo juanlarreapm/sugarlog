@@ -160,7 +160,7 @@ function AuthScreen({ theme, onAuth }) {
 
   return (
     <div style={{
-      width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
+      width: '100%', minHeight: '100dvh', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center', padding: 32,
       background: theme.bg, fontFamily: theme.uiFont, boxSizing: 'border-box',
     }}>
