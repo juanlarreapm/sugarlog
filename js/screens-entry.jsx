@@ -68,7 +68,7 @@ function QuickEntry({ theme, layout, onPick, recents }) {
           fontFamily: theme.uiFont, fontSize: 28, fontWeight: 800,
           color: theme.ink, letterSpacing: -0.7, lineHeight: 1.1,
         }}>
-          Log for Maya
+          Log for Ava
         </div>
         <div style={{
           fontSize: 14, color: theme.inkMute, marginTop: 4, fontWeight: 500,

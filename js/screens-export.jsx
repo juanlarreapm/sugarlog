@@ -75,7 +75,7 @@ function ExportView({ theme, entries, onOpenImport }) {
           fontSize: 13, fontWeight: 600, display: 'flex', gap: 8, alignItems: 'center',
         }}>
           <Ic.check width="18" height="18"/>
-          {exported.kind.toUpperCase()} ready &middot; 7-day summary for Maya
+          {exported.kind.toUpperCase()} ready &middot; 7-day summary for Ava
         </div>
       )}
 
