@@ -147,9 +147,9 @@ function TimeRow({ ts, setTs, theme }) {
       }}>
         <Ic.calendar width="16" height="16"/>
       </div>
-      <button onClick={() => inputRef.current && inputRef.current.showPicker()} style={{
-        flex: 1, background: 'transparent', border: 0, padding: 0,
-        textAlign: 'left', cursor: 'pointer',
+      <div style={{
+        flex: 1, padding: 0,
+        textAlign: 'left',
       }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: theme.inkMute, letterSpacing: 0.4, textTransform: 'uppercase' }}>
           When
@@ -157,15 +157,16 @@ function TimeRow({ ts, setTs, theme }) {
         <div style={{ fontSize: 14, fontWeight: 600, color: theme.ink, fontFamily: theme.numFont, fontVariantNumeric: 'tabular-nums' }}>
           {isNow ? 'Just now' : `${fmtDay(ts)} \u00B7 ${fmtTime(ts)}`}
         </div>
-      </button>
+      </div>
       <input ref={inputRef} type="datetime-local" value={toLocalInput(ts)}
         onChange={handlePickerChange}
         style={{
           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-          opacity: 0, pointerEvents: 'none',
+          opacity: 0,
         }}
       />
       <button onClick={() => setTs(new Date().toISOString())} style={{
+        position: 'relative', zIndex: 1,
         background: 'transparent', border: 0, fontSize: 13, fontWeight: 700,
         color: theme.primary, cursor: 'pointer', fontFamily: theme.uiFont,
       }}>Now</button>
