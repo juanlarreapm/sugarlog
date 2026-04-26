@@ -50,7 +50,7 @@ const db = {
     if (!sbClient) return { data: null, error: { message: 'Supabase not configured' } };
     const { data: { user } } = await sbClient.auth.getUser();
     if (!user) return { data: null, error: { message: 'Not authenticated' } };
-    const { data, error } = await supabase
+    const { data, error } = await sbClient
       .from('entries')
       .select('*')
       .order('ts', { ascending: false });
@@ -104,6 +104,55 @@ const db = {
     const { data, error } = await sbClient.from('entries').delete().eq('id', id);
     return { data, error };
   },
+
+  loadProfile: async () => {
+    if (!sbClient) return { data: null, error: null };
+    const { data: { user } } = await sbClient.auth.getUser();
+    if (!user) return { data: null, error: { message: 'Not authenticated' } };
+    const { data, error } = await sbClient
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
+    return { data, error };
+  },
+
+  saveProfile: async (profile) => {
+    if (!sbClient) return { error: { message: 'Supabase not configured' } };
+    const { data: { user } } = await sbClient.auth.getUser();
+    if (!user) return { error: { message: 'Not authenticated' } };
+    const row = {
+      id: user.id,
+      patient_name: profile.patientName,
+      patient_dob: profile.patientDob || null,
+      diagnosis_date: profile.diagnosisDate || null,
+      diabetes_type: profile.diabetesType || 'T1D',
+      range_low: profile.rangeLow || 70,
+      range_high: profile.rangeHigh || 150,
+      unit: profile.unit || 'mg/dL',
+      carb_ratios: profile.carbRatios || null,
+      correction_factor: profile.correctionFactor || null,
+      long_acting_dose: profile.longActingDose || null,
+      long_acting_time: profile.longActingTime || null,
+      updated_at: new Date().toISOString(),
+    };
+    const { data, error } = await sbClient.from('profiles').upsert(row);
+    return { data, error };
+  },
+
+  profileToApp: (row) => ({
+    patientName: row.patient_name,
+    patientDob: row.patient_dob,
+    diagnosisDate: row.diagnosis_date,
+    diabetesType: row.diabetes_type,
+    rangeLow: row.range_low,
+    rangeHigh: row.range_high,
+    unit: row.unit,
+    carbRatios: row.carb_ratios,
+    correctionFactor: row.correction_factor,
+    longActingDose: row.long_acting_dose,
+    longActingTime: row.long_acting_time,
+  }),
 
   // Convert Supabase row (snake_case) to app entry (camelCase)
   rowToEntry: (row) => ({

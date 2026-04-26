@@ -11,7 +11,9 @@ const THEME_CONFIG = {
 };
 
 function App() {
-  const theme = buildTheme(THEME_CONFIG);
+  const [profile, setProfile] = React.useState(null);
+  const [profileChecked, setProfileChecked] = React.useState(!supabaseConfigured);
+
   const vp = useViewport();
   const maxW = vp.isMobile ? '100%' : vp.isTablet ? 560 : 480;
 
@@ -30,6 +32,23 @@ function App() {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // Load profile after auth
+  React.useEffect(() => {
+    if (!supabaseConfigured || !user) { setProfileChecked(true); return; }
+    db.loadProfile().then(({ data }) => {
+      if (data) setProfile(db.profileToApp(data));
+      setProfileChecked(true);
+    });
+  }, [user]);
+
+  // Build theme with profile range values
+  const themeConfig = {
+    ...THEME_CONFIG,
+    rangeLow: profile?.rangeLow ?? 70,
+    rangeHigh: profile?.rangeHigh ?? 150,
+  };
+  const theme = buildTheme(themeConfig);
 
   // Entries state — start empty if Supabase is configured (will load from cloud)
   const [entries, setEntries] = React.useState(() => {
@@ -97,7 +116,28 @@ function App() {
     );
   }
 
-  const userInitial = user?.email ? user.email[0].toUpperCase() : 'A';
+  // Show loading while checking profile
+  if (supabaseConfigured && !profileChecked) {
+    return (
+      <div style={{
+        width: '100%', minHeight: '100dvh', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', background: theme.bg, fontFamily: theme.uiFont,
+      }}>
+        <SugarlogMark theme={theme} size={28}/>
+      </div>
+    );
+  }
+
+  // Show onboarding if no profile
+  if (supabaseConfigured && user && profileChecked && !profile) {
+    const handleOnboardingComplete = async (formData) => {
+      await db.saveProfile(formData);
+      setProfile(formData);
+    };
+    return <OnboardingFlow theme={theme} onComplete={handleOnboardingComplete}/>;
+  }
+
+  const userInitial = profile?.patientName?.[0]?.toUpperCase() || (user?.email ? user.email[0].toUpperCase() : 'A');
 
   return (
     <div style={{
@@ -127,9 +167,25 @@ function App() {
                      variant={{ value: driftViz, set: setDriftViz }}/>
         </ModalShell>
       )}
+      {modal === 'profile' && (
+        <ModalShell theme={theme} title="Profile" onClose={() => setModal(null)} maxW={maxW}>
+          <ProfilePage
+            theme={theme}
+            profile={profile}
+            email={user?.email}
+            onSave={async (updated) => {
+              await db.saveProfile(updated);
+              setProfile(updated);
+              setModal(null);
+            }}
+            onSignOut={() => { setModal(null); auth.signOut(); }}
+            onClose={() => setModal(null)}
+          />
+        </ModalShell>
+      )}
 
       <div style={{ width: '100%', maxWidth: maxW, margin: '0 auto' }}>
-        {!modal && <Header theme={theme} userInitial={userInitial} onSignOut={supabaseConfigured ? () => auth.signOut() : null}/>}
+        {!modal && <Header theme={theme} userInitial={userInitial} onSignOut={supabaseConfigured ? () => auth.signOut() : null} onOpenProfile={supabaseConfigured ? () => setModal('profile') : null}/>}
       </div>
 
       {!modal && (
@@ -137,7 +193,8 @@ function App() {
           <div style={{ width: '100%', maxWidth: maxW, margin: '0 auto' }}>
             {tab === 'log' && (
               <QuickEntry theme={theme} layout="stackedRecents"
-                          recents={recents} onPick={(k) => setModal(k === 'glucose' ? 'bg' : 'insulin')}/>
+                          recents={recents} patientName={profile?.patientName}
+                          onPick={(k) => setModal(k === 'glucose' ? 'bg' : 'insulin')}/>
             )}
             {tab === 'today' && (
               <TodayView theme={theme} entries={entries}
@@ -182,8 +239,9 @@ function App() {
   );
 }
 
-function Header({ theme, userInitial, onSignOut }) {
+function Header({ theme, userInitial, onSignOut, onOpenProfile }) {
   const [showMenu, setShowMenu] = React.useState(false);
+  const hasMenu = onSignOut || onOpenProfile;
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -191,24 +249,33 @@ function Header({ theme, userInitial, onSignOut }) {
     }}>
       <SugarlogMark theme={theme} size={20}/>
       <div style={{ position: 'relative' }}>
-        <button onClick={() => onSignOut && setShowMenu(!showMenu)} style={{
+        <button onClick={() => hasMenu && setShowMenu(!showMenu)} style={{
           width: 32, height: 32, borderRadius: 999,
           background: theme.primarySoft, color: theme.primaryInk,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontWeight: 800, fontSize: 13, fontFamily: theme.uiFont,
-          letterSpacing: -0.2, border: 0, cursor: onSignOut ? 'pointer' : 'default',
+          letterSpacing: -0.2, border: 0, cursor: hasMenu ? 'pointer' : 'default',
         }}>{userInitial}</button>
-        {showMenu && onSignOut && (
+        {showMenu && hasMenu && (
           <div style={{
             position: 'absolute', top: 38, right: 0, zIndex: 100,
             background: theme.surface, borderRadius: theme.radius.md,
             boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 4, minWidth: 120,
           }}>
-            <button onClick={() => { setShowMenu(false); onSignOut(); }} style={{
-              width: '100%', padding: '10px 14px', border: 0, borderRadius: theme.radius.sm,
-              background: 'transparent', color: theme.status.out.fg, fontSize: 14,
-              fontWeight: 600, cursor: 'pointer', fontFamily: theme.uiFont, textAlign: 'left',
-            }}>Sign out</button>
+            {onOpenProfile && (
+              <button onClick={() => { setShowMenu(false); onOpenProfile(); }} style={{
+                width: '100%', padding: '10px 14px', border: 0, borderRadius: theme.radius.sm,
+                background: 'transparent', color: theme.ink, fontSize: 14,
+                fontWeight: 600, cursor: 'pointer', fontFamily: theme.uiFont, textAlign: 'left',
+              }}>Profile</button>
+            )}
+            {onSignOut && (
+              <button onClick={() => { setShowMenu(false); onSignOut(); }} style={{
+                width: '100%', padding: '10px 14px', border: 0, borderRadius: theme.radius.sm,
+                background: 'transparent', color: theme.status.out.fg, fontSize: 14,
+                fontWeight: 600, cursor: 'pointer', fontFamily: theme.uiFont, textAlign: 'left',
+              }}>Sign out</button>
+            )}
           </div>
         )}
       </div>

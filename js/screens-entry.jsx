@@ -1,6 +1,6 @@
 // screens-entry.jsx — Quick entry hub
 
-function QuickEntry({ theme, layout, onPick, recents }) {
+function QuickEntry({ theme, layout, onPick, recents, patientName }) {
   const Tile = ({ kind, label, sub, icon, accent }) => {
     const big = layout !== 'tiles';
     return (
@@ -68,7 +68,7 @@ function QuickEntry({ theme, layout, onPick, recents }) {
           fontFamily: theme.uiFont, fontSize: 28, fontWeight: 800,
           color: theme.ink, letterSpacing: -0.7, lineHeight: 1.1,
         }}>
-          Log for Ava
+          Log for {patientName || 'you'}
         </div>
         <div style={{
           fontSize: 14, color: theme.inkMute, marginTop: 4, fontWeight: 500,

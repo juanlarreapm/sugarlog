@@ -41,7 +41,35 @@ create policy "Users access own entries" on entries
   with check (auth.uid() = user_id);
 ```
 
-### 3. Add your credentials
+### 3b. Create the `profiles` table
+
+In the Supabase SQL Editor, run:
+
+```sql
+create table profiles (
+  id uuid primary key references auth.users(id),
+  patient_name text not null,
+  patient_age integer,
+  diagnosis_date date,
+  diabetes_type text not null default 'T1D',
+  range_low integer not null default 70,
+  range_high integer not null default 150,
+  unit text not null default 'mg/dL',
+  carb_ratios jsonb,
+  correction_factor numeric,
+  long_acting_dose numeric,
+  long_acting_time text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table profiles enable row level security;
+create policy "Users access own profile" on profiles
+  for all using (auth.uid() = id)
+  with check (auth.uid() = id);
+```
+
+### 3c. Add your credentials
 
 Open `js/supabase.jsx` and replace the placeholder values:
 

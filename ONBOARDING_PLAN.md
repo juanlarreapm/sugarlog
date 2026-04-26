@@ -1,7 +1,9 @@
 # Onboarding Flow Plan
 
 ## Context
-The app currently hardcodes patient-specific values: name "Maya" in `screens-entry.jsx:71`, glucose range 70–150 in `app.jsx:8-9` (`THEME_CONFIG`), and avatar initial 'M' in `app.jsx:98`. After signup, users go straight to the main app with no way to configure their clinical settings. We need a multi-step onboarding wizard that collects patient info, glucose targets, and insulin settings on first login — stored in a Supabase `profiles` table.
+The app currently hardcodes patient-specific values: name "Ava" in `screens-entry.jsx:71`, glucose range 70–150 in `app.jsx:8-9` (`THEME_CONFIG`). The avatar initial is already dynamic (derived from `user.email[0]`). After signup, users go straight to the main app with no way to configure their clinical settings. We need a multi-step onboarding wizard that collects patient info, glucose targets, and insulin settings on first login — stored in a Supabase `profiles` table.
+
+**Note:** `supabase.jsx` uses `sbClient` internally — line 53 had a bug referencing bare `supabase` instead of `sbClient`, now fixed.
 
 ## Approach
 - New `profiles` table in Supabase with RLS
@@ -22,9 +24,7 @@ create table profiles (
   range_low integer not null default 70,
   range_high integer not null default 150,
   unit text not null default 'mg/dL',          -- 'mg/dL' | 'mmol/L'
-  carb_ratio_breakfast numeric,
-  carb_ratio_lunch numeric,
-  carb_ratio_dinner numeric,
+  carb_ratios jsonb,
   correction_factor numeric,
   long_acting_dose numeric,
   long_acting_time text,                       -- e.g. '08:00', '22:00'
@@ -60,7 +60,12 @@ Add to the `db` object:
 - Unit toggle (mg/dL or mmol/L segmented control)
 
 **Step 3: Insulin Settings**
-- Carb ratios by meal (3 number inputs: breakfast / lunch / dinner, e.g. "1u per X g")
+- Carb ratios with day-of-week overrides:
+  - Default card: 4 meal inputs (breakfast, lunch, dinner, snack) labeled "Default (all days)"
+  - "+ Different ratios for some days" link adds an override with day picker (7 circle chips: S M T W T F S) + 4 meal inputs
+  - When override has days selected, default card label updates to show remaining days (e.g. "Mon, Wed, Fri, Sat, Sun")
+  - "Remove" link deletes the override and returns to defaults-only
+  - Stored as JSONB: `{ default: { breakfast, lunch, dinner, snack }, overrides: [{ days: [2,4], breakfast, lunch, dinner, snack }] }`
 - Correction factor (number input, e.g. "1u drops BG by X mg/dL")
 - Long-acting dose (number input)
 - Long-acting time (time-of-day, e.g. "8:00 AM" / "10:00 PM")
