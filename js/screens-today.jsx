@@ -5,9 +5,10 @@ function TodayView({ theme, entries, onAdd, onSelectEntry }) {
   const todays = entries.filter(e => dayKey(e.ts) === todayKey)
                         .sort((a, b) => new Date(b.ts) - new Date(a.ts));
 
-  const bgs = todays.filter(e => e.kind === 'glucose').map(e => e.bg);
+  const bgEntries = todays.filter(e => e.kind === 'glucose' && entryBg(e) != null);
+  const bgs = bgEntries.map(e => entryBg(e));
   const avgBg = bgs.length ? Math.round(bgs.reduce((a,b) => a+b, 0) / bgs.length) : null;
-  const inRangeCount = todays.filter(e => e.kind === 'glucose' && classifyBg(e.bg, theme) === 'inRange').length;
+  const inRangeCount = bgEntries.filter(e => classifyBg(entryBg(e), theme) === 'inRange').length;
   const totalUnits = todays.filter(e => e.kind === 'insulin').reduce((s, e) => s + e.units, 0);
   const tir = bgs.length ? Math.round(inRangeCount / bgs.length * 100) : null;
 
@@ -87,7 +88,8 @@ function Stat({ label, value, accent, theme, divider }) {
 
 function FeedRow({ entry, theme, onClick }) {
   const isBG = entry.kind === 'glucose';
-  const status = isBG ? classifyBg(entry.bg, theme) : null;
+  const bgVal = isBG ? entryBg(entry) : null;
+  const status = bgVal != null ? classifyBg(bgVal, theme) : null;
   return (
     <button onClick={onClick} style={{
       display: 'flex', alignItems: 'center', gap: 12,
@@ -98,8 +100,8 @@ function FeedRow({ entry, theme, onClick }) {
     }}>
       <div style={{
         width: 40, height: 40, borderRadius: theme.radius.md,
-        background: isBG ? theme.status[status].bg : theme.primarySoft,
-        color: isBG ? theme.status[status].fg : theme.primaryInk,
+        background: isBG ? (status ? theme.status[status].bg : theme.raised) : theme.primarySoft,
+        color: isBG ? (status ? theme.status[status].fg : theme.inkMute) : theme.primaryInk,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexShrink: 0,
       }}>
@@ -113,11 +115,11 @@ function FeedRow({ entry, theme, onClick }) {
             <>
               <span style={{
                 fontFamily: theme.numFont, fontWeight: 700, fontSize: 22,
-                color: theme.status[status].fg, letterSpacing: -0.4,
+                color: status ? theme.status[status].fg : theme.inkMute, letterSpacing: -0.4,
                 fontVariantNumeric: 'tabular-nums',
-              }}>{entry.bg}</span>
+              }}>{entry.bg ?? '\u2014'}</span>
               <span style={{ fontSize: 12, fontWeight: 600, color: theme.inkMute }}>mg/dL</span>
-              {entry.cgm && (
+              {entry.cgm != null && (
                 <span style={{ fontSize: 11, color: theme.inkMute, marginLeft: 6, fontFamily: theme.numFont, fontVariantNumeric: 'tabular-nums' }}>
                   CGM {entry.cgm}
                 </span>
@@ -155,13 +157,13 @@ function FeedRow({ entry, theme, onClick }) {
 function DaySparkline({ entries, theme }) {
   if (!entries.length) return null;
   const W = 326, H = 80, pad = 12;
-  const maxBg = Math.max(...entries.map(e => e.bg), theme.rangeHigh + 30);
-  const minBg = Math.min(...entries.map(e => e.bg), theme.rangeLow - 30);
+  const maxBg = Math.max(...entries.map(e => entryBg(e)), theme.rangeHigh + 30);
+  const minBg = Math.min(...entries.map(e => entryBg(e)), theme.rangeLow - 30);
   const range = maxBg - minBg || 1;
   const xAt = (i) => pad + (i / Math.max(1, entries.length - 1)) * (W - 2 * pad);
   const yAt = (v) => H - pad - ((v - minBg) / range) * (H - 2 * pad);
 
-  const points = entries.map((e, i) => `${xAt(i)},${yAt(e.bg)}`).join(' ');
+  const points = entries.map((e, i) => `${xAt(i)},${yAt(entryBg(e))}`).join(' ');
 
   const yLow = yAt(theme.rangeLow);
   const yHigh = yAt(theme.rangeHigh);
@@ -182,8 +184,8 @@ function DaySparkline({ entries, theme }) {
         <line x1={0} x2={W} y1={yHigh} y2={yHigh} stroke={theme.status.inRange.fg} strokeOpacity={0.3} strokeWidth={0.5} strokeDasharray="2 3"/>
         <polyline points={points} fill="none" stroke={theme.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
         {entries.map((e, i) => {
-          const s = classifyBg(e.bg, theme);
-          return <circle key={e.id} cx={xAt(i)} cy={yAt(e.bg)} r={3.5} fill={theme.status[s].fg} stroke={theme.surface} strokeWidth={1.5}/>;
+          const s = classifyBg(entryBg(e), theme);
+          return <circle key={e.id} cx={xAt(i)} cy={yAt(entryBg(e))} r={3.5} fill={theme.status[s].fg} stroke={theme.surface} strokeWidth={1.5}/>;
         })}
       </svg>
     </Card>

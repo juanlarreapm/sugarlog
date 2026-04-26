@@ -134,7 +134,8 @@ function ImportFlow({ theme, onClose, onConfirm }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {parsed.map(e => {
               const isBG = e.kind === 'glucose';
-              const status = isBG ? classifyBg(e.bg, theme) : null;
+              const bgVal = isBG ? entryBg(e) : null;
+              const status = bgVal != null ? classifyBg(bgVal, theme) : null;
               const ex = excluded.has(e.id);
               return (
                 <button key={e.id} onClick={() => toggle(e.id)} style={{

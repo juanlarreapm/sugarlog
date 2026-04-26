@@ -103,7 +103,8 @@ function QuickEntry({ theme, layout, onPick, recents }) {
 
 function RecentRow({ entry, theme, isLast }) {
   const isBG = entry.kind === 'glucose';
-  const status = isBG ? classifyBg(entry.bg, theme) : null;
+  const bgVal = isBG ? entryBg(entry) : null;
+  const status = bgVal != null ? classifyBg(bgVal, theme) : null;
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12,
@@ -122,7 +123,7 @@ function RecentRow({ entry, theme, isLast }) {
         <div style={{
           fontSize: 14, fontWeight: 600, color: theme.ink,
         }}>
-          {isBG ? `${entry.bg} mg/dL` : `${entry.units}u ${entry.insulinType}`}
+          {isBG ? `${entry.bg != null ? entry.bg : 'CGM ' + entry.cgm} mg/dL` : `${entry.units}u ${entry.insulinType}`}
         </div>
         <div style={{
           fontSize: 12, color: theme.inkMute, marginTop: 1,

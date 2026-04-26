@@ -12,8 +12,8 @@ function ExportView({ theme, entries, onOpenImport }) {
   });
   const bgs = inRange.filter(e => e.kind === 'glucose');
   const insulins = inRange.filter(e => e.kind === 'insulin');
-  const avg = bgs.length ? Math.round(bgs.reduce((s,e) => s+e.bg, 0)/bgs.length) : 0;
-  const tir = bgs.length ? Math.round(bgs.filter(e => classifyBg(e.bg, theme) === 'inRange').length / bgs.length * 100) : 0;
+  const avg = bgs.length ? Math.round(bgs.reduce((s,e) => s+entryBg(e), 0)/bgs.length) : 0;
+  const tir = bgs.length ? Math.round(bgs.filter(e => classifyBg(entryBg(e), theme) === 'inRange').length / bgs.length * 100) : 0;
   const totalUnits = insulins.reduce((s,e) => s+e.units, 0);
 
   const [exported, setExported] = React.useState(null);

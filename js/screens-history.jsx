@@ -13,8 +13,8 @@ function HistoryView({ theme, entries, onSelectEntry }) {
       {days.map(d => {
         const dayEntries = groups[d].sort((a, b) => new Date(b.ts) - new Date(a.ts));
         const bgs = dayEntries.filter(e => e.kind === 'glucose');
-        const avg = bgs.length ? Math.round(bgs.reduce((s, e) => s + e.bg, 0) / bgs.length) : null;
-        const tir = bgs.length ? Math.round(bgs.filter(e => classifyBg(e.bg, theme) === 'inRange').length / bgs.length * 100) : null;
+        const avg = bgs.length ? Math.round(bgs.reduce((s, e) => s + entryBg(e), 0) / bgs.length) : null;
+        const tir = bgs.length ? Math.round(bgs.filter(e => classifyBg(entryBg(e), theme) === 'inRange').length / bgs.length * 100) : null;
         const units = dayEntries.filter(e => e.kind === 'insulin').reduce((s, e) => s + e.units, 0);
         return (
           <div key={d} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

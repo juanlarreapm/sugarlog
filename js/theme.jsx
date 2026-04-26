@@ -97,7 +97,12 @@ function statusLabel(s) {
   return { inRange: 'In range', borderline: 'Borderline', out: 'High', low: 'Low' }[s] || s;
 }
 
+function entryBg(entry) {
+  return entry.bg ?? entry.cgm;
+}
+
 window.buildTheme = buildTheme;
 window.classifyBg = classifyBg;
 window.statusLabel = statusLabel;
+window.entryBg = entryBg;
 window.ACCENT_PALETTES = ACCENT_PALETTES;

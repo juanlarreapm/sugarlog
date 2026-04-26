@@ -6,7 +6,11 @@ function BgForm({ theme, onSave, onCancel }) {
   const [ts, setTs] = React.useState(new Date().toISOString());
   const [note, setNote] = React.useState('');
 
-  const status = bg ? classifyBg(Number(bg), theme) : null;
+  const hasBg = bg !== '';
+  const hasCgm = cgm !== '';
+  const canSave = hasBg || hasCgm;
+  const statusValue = hasBg ? Number(bg) : (hasCgm ? Number(cgm) : null);
+  const status = statusValue != null ? classifyBg(statusValue, theme) : null;
 
   const Pad = ({ onPress }) => {
     const keys = ['1','2','3','4','5','6','7','8','9','.', '0', '\u232B'];
@@ -106,8 +110,8 @@ function BgForm({ theme, onSave, onCancel }) {
       <div style={{ display: 'flex', gap: 10, marginTop: 'auto' }}>
         <Btn variant="ghost" theme={theme} onClick={onCancel} style={{ flex: 1 }}>Cancel</Btn>
         <Btn variant="primary" theme={theme} size="lg" full
-             onClick={() => bg && onSave({ kind: 'glucose', ts, bg: Number(bg), cgm: cgm ? Number(cgm) : null, note })}
-             style={{ flex: 2, opacity: bg ? 1 : 0.4 }}>
+             onClick={() => canSave && onSave({ kind: 'glucose', ts, bg: hasBg ? Number(bg) : null, cgm: hasCgm ? Number(cgm) : null, note })}
+             style={{ flex: 2, opacity: canSave ? 1 : 0.4 }}>
           <Ic.check width="18" height="18"/> Save
         </Btn>
       </div>
@@ -116,13 +120,25 @@ function BgForm({ theme, onSave, onCancel }) {
 }
 
 function TimeRow({ ts, setTs, theme }) {
+  const inputRef = React.useRef(null);
   const d = new Date(ts);
   const isNow = (Date.now() - d.getTime()) < 60_000;
+
+  const toLocalInput = (iso) => {
+    const dt = new Date(iso);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+  };
+
+  const handlePickerChange = (e) => {
+    if (e.target.value) setTs(new Date(e.target.value).toISOString());
+  };
+
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 10,
       background: theme.raised, padding: '10px 14px',
-      borderRadius: theme.radius.md,
+      borderRadius: theme.radius.md, position: 'relative',
     }}>
       <div style={{
         width: 28, height: 28, borderRadius: theme.radius.sm,
@@ -131,14 +147,24 @@ function TimeRow({ ts, setTs, theme }) {
       }}>
         <Ic.calendar width="16" height="16"/>
       </div>
-      <div style={{ flex: 1 }}>
+      <button onClick={() => inputRef.current && inputRef.current.showPicker()} style={{
+        flex: 1, background: 'transparent', border: 0, padding: 0,
+        textAlign: 'left', cursor: 'pointer',
+      }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: theme.inkMute, letterSpacing: 0.4, textTransform: 'uppercase' }}>
           When
         </div>
         <div style={{ fontSize: 14, fontWeight: 600, color: theme.ink, fontFamily: theme.numFont, fontVariantNumeric: 'tabular-nums' }}>
           {isNow ? 'Just now' : `${fmtDay(ts)} \u00B7 ${fmtTime(ts)}`}
         </div>
-      </div>
+      </button>
+      <input ref={inputRef} type="datetime-local" value={toLocalInput(ts)}
+        onChange={handlePickerChange}
+        style={{
+          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+          opacity: 0, pointerEvents: 'none',
+        }}
+      />
       <button onClick={() => setTs(new Date().toISOString())} style={{
         background: 'transparent', border: 0, fontSize: 13, fontWeight: 700,
         color: theme.primary, cursor: 'pointer', fontFamily: theme.uiFont,
