@@ -67,6 +67,10 @@ Script load order in `index.html` matters — files loaded later can reference g
 
 Push to `main` triggers GitHub Actions deploy to GitHub Pages (`.github/workflows/pages.yml`).
 
+## MCP Servers
+
+`.mcp.json` configures a Supabase MCP server that provides direct database query/update tools. If Supabase tools aren't appearing, the user may need to restart Claude Code for the MCP connection to initialize.
+
 ## Testing
 
 No test framework. Verify changes by opening `index.html` in a browser. For Supabase features, you need a configured project (see `SETUP.md`).
