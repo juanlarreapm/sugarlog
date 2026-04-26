@@ -140,31 +140,32 @@ function TimeRow({ ts, setTs, theme }) {
       background: theme.raised, padding: '10px 14px',
       borderRadius: theme.radius.md, position: 'relative',
     }}>
-      <div style={{
-        width: 28, height: 28, borderRadius: theme.radius.sm,
-        background: theme.surface, color: theme.inkDim,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      <label style={{
+        display: 'flex', alignItems: 'center', gap: 10, flex: 1, cursor: 'pointer',
       }}>
-        <Ic.calendar width="16" height="16"/>
-      </div>
-      <div style={{
-        flex: 1, padding: 0,
-        textAlign: 'left',
-      }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: theme.inkMute, letterSpacing: 0.4, textTransform: 'uppercase' }}>
-          When
+        <div style={{
+          width: 28, height: 28, borderRadius: theme.radius.sm,
+          background: theme.surface, color: theme.inkDim,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Ic.calendar width="16" height="16"/>
         </div>
-        <div style={{ fontSize: 14, fontWeight: 600, color: theme.ink, fontFamily: theme.numFont, fontVariantNumeric: 'tabular-nums' }}>
-          {isNow ? 'Just now' : `${fmtDay(ts)} \u00B7 ${fmtTime(ts)}`}
+        <div style={{ flex: 1, padding: 0, textAlign: 'left' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: theme.inkMute, letterSpacing: 0.4, textTransform: 'uppercase' }}>
+            When
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: theme.ink, fontFamily: theme.numFont, fontVariantNumeric: 'tabular-nums' }}>
+            {isNow ? 'Just now' : `${fmtDay(ts)} \u00B7 ${fmtTime(ts)}`}
+          </div>
         </div>
-      </div>
-      <input ref={inputRef} type="datetime-local" value={toLocalInput(ts)}
-        onChange={handlePickerChange}
-        style={{
-          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-          opacity: 0,
-        }}
-      />
+        <input ref={inputRef} type="datetime-local" value={toLocalInput(ts)}
+          onChange={handlePickerChange}
+          style={{
+            position: 'absolute', top: 0, left: 0, width: 1, height: 1, opacity: 0,
+            overflow: 'hidden', clip: 'rect(0,0,0,0)',
+          }}
+        />
+      </label>
       <button onClick={() => setTs(new Date().toISOString())} style={{
         position: 'relative', zIndex: 1,
         background: 'transparent', border: 0, fontSize: 13, fontWeight: 700,
